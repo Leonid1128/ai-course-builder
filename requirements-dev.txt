@@ -1,0 +1,9 @@
+-r requirements.txt
+pytest>=8.3
+pytest-django>=4.9
+pytest-cov>=5.0
+factory-boy>=3.3
+faker>=28.0
+mypy>=1.11
+django-stubs>=5.1
+djangorestframework-stubs>=3.15

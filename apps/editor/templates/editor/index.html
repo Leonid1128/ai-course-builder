@@ -1,0 +1,215 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Конструктор курсов</title>
+  <style>
+    :root { font-family: Georgia, "Times New Roman", serif; color: #1b1b1b; background: #f4f1ea; }
+    body { margin: 0; }
+    header { background: #1f3d2b; color: #f4f1ea; padding: 1rem 1.5rem; }
+    main { display: grid; grid-template-columns: 320px 1fr; min-height: calc(100vh - 64px); }
+    aside, section { padding: 1rem 1.25rem; }
+    aside { background: #ebe6da; border-right: 1px solid #d5cfc0; }
+    .card { background: #fff; border: 1px solid #d5cfc0; border-radius: 8px; padding: 0.9rem; margin-bottom: 0.75rem; }
+    label { display: block; font-size: 0.85rem; margin: 0.4rem 0 0.15rem; }
+    input, textarea, select, button { font: inherit; }
+    input, textarea { width: 100%; box-sizing: border-box; padding: 0.4rem; }
+    button { background: #1f3d2b; color: #fff; border: 0; padding: 0.45rem 0.8rem; border-radius: 4px; cursor: pointer; margin: 0.2rem 0.2rem 0 0; }
+    button.secondary { background: #6b5843; }
+    button.danger { background: #8b2e2e; }
+    .muted { color: #5c584f; font-size: 0.9rem; }
+    .blocks { display: grid; gap: 0.75rem; }
+    pre { white-space: pre-wrap; background: #f7f4ee; padding: 0.5rem; overflow: auto; }
+  </style>
+</head>
+<body>
+  <header>
+    <strong>Конструктор курсов</strong>
+    <span class="muted" id="llm-info"></span>
+  </header>
+  <main>
+    <aside>
+      <h2>Новый курс</h2>
+      <label>Дисциплина</label>
+      <input id="discipline_name" value="Информатика">
+      <label>ФИО преподавателя</label>
+      <input id="instructor_fio" value="Иванов И.И.">
+      <label>ID преподавателя</label>
+      <input id="instructor_id" value="instructor-1">
+      <label>Направление</label>
+      <input id="education_direction" value="09.03.01">
+      <label>Часы</label>
+      <input id="course_hours" type="number" value="36" min="1">
+      <button id="create-course">Создать</button>
+      <h2>Курсы</h2>
+      <div id="course-list"></div>
+    </aside>
+    <section>
+      <div id="course-panel" class="muted">Выберите курс слева.</div>
+    </section>
+  </main>
+  <script>
+    const instructorInput = () => document.getElementById("instructor_id").value;
+    const headers = () => ({
+      "Content-Type": "application/json",
+      "X-Instructor-Id": instructorInput(),
+    });
+
+    async function api(path, options = {}) {
+      const response = await fetch(path, options);
+      const data = await response.json().catch(() => ({}));
+      if (!response.ok) throw new Error(data.error || data.detail || response.statusText);
+      return data;
+    }
+
+    async function loadLlm() {
+      const info = await api("/api/llm/");
+      document.getElementById("llm-info").textContent =
+        ` · LLM: ${info.provider} / ${info.model}`;
+    }
+
+    async function loadCourses() {
+      const data = await api("/api/courses/");
+      const items = data.results || data;
+      const root = document.getElementById("course-list");
+      root.innerHTML = "";
+      items.forEach((course) => {
+        const el = document.createElement("div");
+        el.className = "card";
+        el.innerHTML = `<strong>${course.discipline_name}</strong><div class="muted">${course.status}</div>`;
+        el.onclick = () => openCourse(course.id);
+        root.appendChild(el);
+      });
+    }
+
+    async function createCourse() {
+      await api("/api/courses/", {
+        method: "POST",
+        headers: headers(),
+        body: JSON.stringify({
+          instructor_id: instructorInput(),
+          instructor_fio: document.getElementById("instructor_fio").value,
+          discipline_name: document.getElementById("discipline_name").value,
+          education_direction: document.getElementById("education_direction").value,
+          course_hours: Number(document.getElementById("course_hours").value),
+        }),
+      });
+      await loadCourses();
+    }
+
+    async function openCourse(id) {
+      const course = await api(`/api/courses/${id}/`);
+      const panel = document.getElementById("course-panel");
+      panel.innerHTML = `
+        <h2>${course.discipline_name}</h2>
+        <p class="muted">${course.education_direction} · ${course.course_hours} ч. · ${course.status}</p>
+        <label>PDF-материалы (до 100 стр.)</label>
+        <input id="pdf" type="file" accept="application/pdf">
+        <button data-act="upload" class="secondary">Загрузить PDF</button>
+        <p>
+          <button data-act="structure">Сгенерировать структуру</button>
+          <button data-act="blocks" class="secondary">Сгенерировать блоки</button>
+        </p>
+        <div id="sections"></div>
+      `;
+      panel.querySelector('[data-act="structure"]').onclick = async () => {
+        await api(`/api/courses/${id}/generate-structure/`, { method: "POST", headers: headers() });
+        await openCourse(id);
+      };
+      panel.querySelector('[data-act="blocks"]').onclick = async () => {
+        await api(`/api/courses/${id}/generate-all-blocks/`, { method: "POST", headers: headers() });
+        await openCourse(id);
+      };
+      panel.querySelector('[data-act="upload"]').onclick = async () => {
+        const file = document.getElementById("pdf").files[0];
+        if (!file) return;
+        const body = new FormData();
+        body.append("course", id);
+        body.append("filepath", file);
+        await fetch("/api/materials/", { method: "POST", body, headers: { "X-Instructor-Id": instructorInput() } });
+        await openCourse(id);
+      };
+      const sectionsRoot = panel.querySelector("#sections");
+      (course.sections || []).forEach((section) => {
+        const wrap = document.createElement("div");
+        wrap.innerHTML = `<h3>${section.title} <span class="muted">${section.hours} ч.</span></h3>`;
+        const blocks = document.createElement("div");
+        blocks.className = "blocks";
+        (section.blocks || []).forEach((block) => blocks.appendChild(renderBlock(block, id)));
+        wrap.appendChild(blocks);
+        sectionsRoot.appendChild(wrap);
+      });
+    }
+
+    function renderBlock(block, courseId) {
+      const el = document.createElement("div");
+      el.className = "card";
+
+      let html = `<strong>${block.type}</strong> · v${block.version}`;
+      const contentKeys = Object.keys(block.content);
+
+      if (contentKeys.length === 0) {
+        html += `<div class="muted">(пусто)</div>`;
+      } else {
+        contentKeys.forEach(key => {
+          const value = block.content[key] ?? '';
+          const isLong = typeof value === "string" && value.length > 100;
+          html += `<label>${key}</label>`;
+          if (isLong) {
+            html += `<textarea class="field-${key}" rows="4">${value}</textarea>`;
+          } else {
+            // Для input используем атрибут value, а не содержимое
+            html += `<input class="field-${key}" type="text" value="${value}" placeholder="${key}">`;
+          }
+        });
+      }
+
+      html += `
+        <label>Инструкция для перегенерации</label>
+        <input class="instruction" placeholder="Сократи текст, сохрани термины из PDF">
+        <button data-act="save">Сохранить</button>
+        <button data-act="regen" class="secondary">Перегенерировать</button>
+        <button data-act="delete" class="danger">Удалить</button>
+      `;
+      el.innerHTML = html;
+
+      // Обработчики
+      el.querySelector('[data-act="save"]').onclick = async () => {
+        const newContent = {};
+        contentKeys.forEach(key => {
+          const field = el.querySelector(`.field-${key}`);
+          newContent[key] = field.value;
+        });
+        await api(`/api/blocks/${block.id}/`, {
+          method: "PATCH",
+          headers: headers(),
+          body: JSON.stringify({ content: newContent }),
+        });
+        await openCourse(courseId);
+      };
+
+      el.querySelector('[data-act="regen"]').onclick = async () => {
+        const instruction = el.querySelector(".instruction").value;
+        await api(`/api/blocks/${block.id}/regenerate/`, {
+          method: "POST",
+          headers: headers(),
+          body: JSON.stringify({ instruction }),
+        });
+        await openCourse(courseId);
+      };
+
+      el.querySelector('[data-act="delete"]').onclick = async () => {
+        await api(`/api/blocks/${block.id}/`, { method: "DELETE", headers: headers() });
+        await openCourse(courseId);
+      };
+
+      return el;
+    }
+
+    document.getElementById("create-course").onclick = () => createCourse().catch(alert);
+    loadLlm().catch(() => {});
+    loadCourses().catch((err) => alert(err.message));
+  </script>
+</body>
+</html>
