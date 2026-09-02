@@ -72,7 +72,7 @@ def process_pdf_file(
             logger.exception("Embedding failed for material %s; storing text-only chunks", material.id)
             vectors = []
 
-    material.chunks.all().delete()
+    material.chunks.all().delete() # type: ignore[attr-defined]
     for index, chunk in enumerate(chunks):
         vector = vectors[index] if index < len(vectors) else []
         MaterialEmbedding.objects.create(

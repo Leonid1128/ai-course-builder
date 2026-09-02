@@ -23,7 +23,7 @@ class LlamaCppPythonClient(AIClientProtocol):
                 "LLAMA_CPP_MODEL_PATH is required for LLM_PROVIDER=llamacpp_python"
             )
         try:
-            from llama_cpp import Llama
+            from llama_cpp import Llama # type: ignore[import-not-found]
         except ImportError as exc:
             raise LLMNotConfiguredError(
                 "Install llama-cpp-python to use in-process GGUF models: "

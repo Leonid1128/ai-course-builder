@@ -86,8 +86,8 @@ class BlockViewSet(viewsets.ModelViewSet):
     serializer_class = BlockSerializer
     permission_classes = [IsInstructorOrReadOnly]
 
-    def perform_update(self, serializer: BlockSerializer) -> None:
-        block: ContentBlock = serializer.instance
+    def perform_update(self, serializer: BlockSerializer) -> None: # type: ignore[override]
+        block: ContentBlock = serializer.instance # type: ignore[assignment]
         record_revision(block)
         block.bump_version()
         serializer.save(version=block.version)

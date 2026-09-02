@@ -17,10 +17,11 @@ class OpenAICompatibleClient(AIClientProtocol):
         base_url: str | None = None,
         timeout: float = 30.0,
     ) -> None:
-        kwargs: dict[str, object] = {"api_key": api_key or "sk-local", "timeout": timeout}
-        if base_url:
-            kwargs["base_url"] = base_url
-        self._client = OpenAI(**kwargs)
+        self._client = OpenAI(
+            api_key=api_key or "sk-local",
+            base_url=base_url, 
+            timeout=timeout,
+        )
         self._model = model
         self._default_timeout = timeout
 

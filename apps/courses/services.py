@@ -23,5 +23,5 @@ def reorder_blocks(items: list[dict[str, object]]) -> None:
         raise ContentBlock.DoesNotExist(f"Unknown blocks: {missing}")
     for item in items:
         block = blocks[str(item["id"])]
-        block.order = int(item["order"])  # type: ignore[arg-type]
+        block.order = int(item["order"])  # type: ignore [call-overload]
         block.save(update_fields=["order", "updated_at"])

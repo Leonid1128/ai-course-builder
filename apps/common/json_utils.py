@@ -15,7 +15,7 @@ def extract_json_text(raw: str) -> str:
     if fenced:
         return fenced.group(1).strip()
 
-    for opener, closer in (("{", "}"), ("[", "]")):
+    for opener, closer in (("[", "]"), ("{", "}")):
         start = text.find(opener)
         end = text.rfind(closer)
         if start != -1 and end > start:

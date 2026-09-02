@@ -45,7 +45,7 @@ def generate_structure_task(self, course_id: str) -> dict[str, str]:
         )
         sections = generator.generate(spec, timeout=settings.LLM.structure_timeout)
         with transaction.atomic():
-            course.sections.all().delete()
+            course.sections.all().delete()  # type: ignore[attr-defined]
             for order, sect in enumerate(sections):
                 CourseSection.objects.create(
                     course=course,
@@ -77,13 +77,13 @@ def generate_blocks_for_section(self, section_id: str) -> dict[str, int]:
         blocks = generator.generate_for_section(
             discipline=section.course.discipline_name,
             section_title=section.title,
-            course_id=section.course_id,
+            course_id=section.course.id,
             k=settings.RAG_TOP_K,
             timeout=settings.LLM.block_timeout,
         )
         created = 0
         with transaction.atomic():
-            section.blocks.all().delete()
+            section.blocks.all().delete() # type: ignore[attr-defined]
             for order, block in enumerate(blocks):
                 ContentBlock.objects.create(
                     section=section,

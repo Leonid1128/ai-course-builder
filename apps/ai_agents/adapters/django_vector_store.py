@@ -77,7 +77,7 @@ class DjangoVectorStore(VectorStoreProtocol):
                     "metadata": {
                         **(chunk.chunk_metadata or {}),
                         "filename": chunk.material.filename,
-                        "material_id": str(chunk.material_id),
+                        "material_id": str(chunk.material.id),
                     },
                 }
             )

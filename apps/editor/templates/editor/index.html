@@ -153,14 +153,19 @@
         html += `<div class="muted">(пусто)</div>`;
       } else {
         contentKeys.forEach(key => {
-          const value = block.content[key] ?? '';
-          const isLong = typeof value === "string" && value.length > 100;
+          const value = block.content[key];
           html += `<label>${key}</label>`;
-          if (isLong) {
-            html += `<textarea class="field-${key}" rows="4">${value}</textarea>`;
+
+          if (typeof value === "object" && value !== null) {
+            const jsonStr = JSON.stringify(value, null, 2);
+            html += `<textarea class="field-${key}" rows="6">${jsonStr}</textarea>`;
           } else {
-            // Для input используем атрибут value, а не содержимое
-            html += `<input class="field-${key}" type="text" value="${value}" placeholder="${key}">`;
+            const isLong = typeof value === "string" && value.length > 100;
+            if (isLong) {
+              html += `<textarea class="field-${key}" rows="4">${value}</textarea>`;
+            } else {
+              html += `<input class="field-${key}" type="text" value="${value ?? ''}" placeholder="${key}">`;
+            }
           }
         });
       }
@@ -174,33 +179,26 @@
       `;
       el.innerHTML = html;
 
-      // Обработчики
       el.querySelector('[data-act="save"]').onclick = async () => {
         const newContent = {};
         contentKeys.forEach(key => {
           const field = el.querySelector(`.field-${key}`);
-          newContent[key] = field.value;
+          const rawValue = field.value;
+          if (typeof block.content[key] === "object" && block.content[key] !== null) {
+            try {
+              newContent[key] = JSON.parse(rawValue);
+            } catch (e) {
+              newContent[key] = rawValue;
+            }
+          } else {
+            newContent[key] = rawValue;
+          }
         });
         await api(`/api/blocks/${block.id}/`, {
           method: "PATCH",
           headers: headers(),
           body: JSON.stringify({ content: newContent }),
         });
-        await openCourse(courseId);
-      };
-
-      el.querySelector('[data-act="regen"]').onclick = async () => {
-        const instruction = el.querySelector(".instruction").value;
-        await api(`/api/blocks/${block.id}/regenerate/`, {
-          method: "POST",
-          headers: headers(),
-          body: JSON.stringify({ instruction }),
-        });
-        await openCourse(courseId);
-      };
-
-      el.querySelector('[data-act="delete"]').onclick = async () => {
-        await api(`/api/blocks/${block.id}/`, { method: "DELETE", headers: headers() });
         await openCourse(courseId);
       };
 

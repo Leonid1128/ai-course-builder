@@ -14,18 +14,16 @@ class OpenAICompatibleEmbeddings(EmbeddingClientProtocol):
         api_key: str,
         model: str,
         base_url: str | None = None,
-        timeout: float = 60.0,          
-        batch_size: int = 20,           
-        max_retries: int = 3,           
+        timeout: float = 60.0,
+        batch_size: int = 20,
+        max_retries: int = 3,
     ) -> None:
-        kwargs: dict[str, object] = {
-            "api_key": api_key or "sk-local",
-            "timeout": timeout,
-            "max_retries": max_retries,
-        }
-        if base_url:
-            kwargs["base_url"] = base_url
-        self._client = OpenAI(**kwargs)
+        self._client = OpenAI(
+            api_key=api_key or "sk-local",
+            base_url=base_url,  
+            timeout=timeout,
+            max_retries=max_retries,
+        )
         self._model = model
         self._batch_size = batch_size
 
@@ -53,7 +51,7 @@ class LlamaCppPythonEmbeddings(EmbeddingClientProtocol):
         if not model_path:
             raise LLMNotConfiguredError("LLAMA_CPP_MODEL_PATH is required for embeddings")
         try:
-            from llama_cpp import Llama
+            from llama_cpp import Llama  # type: ignore[import-not-found]
         except ImportError as exc:
             raise LLMNotConfiguredError("Install llama-cpp-python for local embeddings") from exc
         self._llm = Llama(model_path=model_path, embedding=True, n_ctx=n_ctx, verbose=False)

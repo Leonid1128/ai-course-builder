@@ -14,21 +14,21 @@ class Course(models.Model):
         READY = "ready", "Готов"
         ERROR = "error", "Ошибка"
 
-    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
-    instructor_id = models.CharField(max_length=50, db_index=True)
-    instructor_fio = models.CharField(max_length=255)
-    discipline_name = models.CharField(max_length=255)
-    education_direction = models.CharField(max_length=255)
-    course_hours = models.PositiveIntegerField(validators=[MinValueValidator(1)])
-    status = models.CharField(
+    id: models.UUIDField = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
+    instructor_id: models.CharField = models.CharField(max_length=50, db_index=True)
+    instructor_fio: models.CharField = models.CharField(max_length=255)
+    discipline_name: models.CharField = models.CharField(max_length=255)
+    education_direction: models.CharField = models.CharField(max_length=255)
+    course_hours: models.PositiveIntegerField = models.PositiveIntegerField(validators=[MinValueValidator(1)])
+    status: models.CharField = models.CharField(
         max_length=20,
         choices=Status.choices,
         default=Status.DRAFT,
         db_index=True,
     )
-    last_error = models.TextField(blank=True, null=True)
-    created_at = models.DateTimeField(auto_now_add=True)
-    updated_at = models.DateTimeField(auto_now=True)
+    last_error: models.TextField = models.TextField(blank=True, null=True)
+    created_at: models.DateTimeField = models.DateTimeField(auto_now_add=True)
+    updated_at: models.DateTimeField = models.DateTimeField(auto_now=True)
 
     class Meta:
         ordering = ["-created_at"]
@@ -38,13 +38,13 @@ class Course(models.Model):
 
 
 class CourseSection(models.Model):
-    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
-    course = models.ForeignKey(Course, on_delete=models.CASCADE, related_name="sections")
-    title = models.CharField(max_length=500)
-    description = models.TextField(blank=True)
-    hours = models.PositiveIntegerField(default=0)
-    objectives = models.JSONField(default=list)
-    order = models.PositiveIntegerField(default=0)
+    id: models.UUIDField = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
+    course: models.ForeignKey = models.ForeignKey(Course, on_delete=models.CASCADE, related_name="sections")
+    title: models.CharField = models.CharField(max_length=500)
+    description: models.TextField = models.TextField(blank=True)
+    hours: models.PositiveIntegerField = models.PositiveIntegerField(default=0)
+    objectives: models.JSONField = models.JSONField(default=list)
+    order: models.PositiveIntegerField = models.PositiveIntegerField(default=0)
 
     class Meta:
         ordering = ["order"]
@@ -60,19 +60,19 @@ class ContentBlock(models.Model):
         QUIZ = "quiz", "Самопроверка"
         TEST = "test", "Тест"
 
-    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
-    section = models.ForeignKey(
+    id: models.UUIDField = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
+    section: models.ForeignKey = models.ForeignKey(
         CourseSection,
         on_delete=models.CASCADE,
         related_name="blocks",
     )
-    type = models.CharField(max_length=20, choices=BlockType.choices)
-    content = models.JSONField(default=dict)
-    source_meta = models.JSONField(default=dict)
-    version = models.PositiveIntegerField(default=1)
-    order = models.PositiveIntegerField(default=0)
-    created_at = models.DateTimeField(auto_now_add=True)
-    updated_at = models.DateTimeField(auto_now=True)
+    type: models.CharField = models.CharField(max_length=20, choices=BlockType.choices)
+    content: models.JSONField = models.JSONField(default=dict)
+    source_meta: models.JSONField = models.JSONField(default=dict)
+    version: models.PositiveIntegerField = models.PositiveIntegerField(default=1)
+    order: models.PositiveIntegerField = models.PositiveIntegerField(default=0)
+    created_at: models.DateTimeField = models.DateTimeField(auto_now_add=True)
+    updated_at: models.DateTimeField = models.DateTimeField(auto_now=True)
 
     class Meta:
         ordering = ["order"]
@@ -90,18 +90,16 @@ class ContentBlock(models.Model):
 
 
 class BlockRevision(models.Model):
-    """Point-in-time copy of a block for the editor history."""
-
-    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
-    block = models.ForeignKey(
+    id: models.UUIDField = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
+    block: models.ForeignKey = models.ForeignKey(
         ContentBlock,
         on_delete=models.CASCADE,
         related_name="revisions",
     )
-    version = models.PositiveIntegerField()
-    content = models.JSONField(default=dict)
-    source_meta = models.JSONField(default=dict)
-    created_at = models.DateTimeField(auto_now_add=True)
+    version: models.PositiveIntegerField = models.PositiveIntegerField()
+    content: models.JSONField = models.JSONField(default=dict)
+    source_meta: models.JSONField = models.JSONField(default=dict)
+    created_at: models.DateTimeField = models.DateTimeField(auto_now_add=True)
 
     class Meta:
         ordering = ["-version"]
