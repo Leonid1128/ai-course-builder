@@ -111,7 +111,13 @@ class BlockViewSet(viewsets.ModelViewSet):
     def reorder(self, request: Request) -> Response:
         serializer = ReorderItemSerializer(data=request.data, many=True)
         serializer.is_valid(raise_exception=True)
-        reorder_blocks(serializer.validated_data)
+        try:
+            reorder_blocks(serializer.validated_data)
+        except ContentBlock.DoesNotExist as exc:
+            # ContentBlock.DoesNotExist is not translated to a 404 by DRF's
+            # default exception handler (only Http404/PermissionDenied are),
+            # so without this it would surface as an unhandled 500.
+            return Response({"error": str(exc)}, status=status.HTTP_404_NOT_FOUND)
         return Response({"status": "ok"})
 
     @action(detail=False, methods=["post"], url_path="bulk-delete")

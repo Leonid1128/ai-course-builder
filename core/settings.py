@@ -12,7 +12,7 @@ load_dotenv()
 BASE_DIR = Path(__file__).resolve().parent.parent
 
 SECRET_KEY = os.getenv("SECRET_KEY", "django-insecure-change-me")
-DEBUG = True
+DEBUG = os.getenv("DEBUG", "True").strip().lower() in {"1", "true", "yes", "on"}
 ALLOWED_HOSTS = [
     host.strip()
     for host in os.getenv("ALLOWED_HOSTS", "localhost,127.0.0.1").split(",")

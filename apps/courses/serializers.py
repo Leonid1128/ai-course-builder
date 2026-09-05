@@ -55,9 +55,19 @@ class MaterialSerializer(serializers.ModelSerializer):
             "filepath",
             "filetype",
             "embedding_status",
+            "processing_error",
+            "page_count",
             "uploaded_at",
         ]
-        read_only_fields = ["id", "filename", "filetype", "embedding_status", "uploaded_at"]
+        read_only_fields = [
+            "id",
+            "filename",
+            "filetype",
+            "embedding_status",
+            "processing_error",
+            "page_count",
+            "uploaded_at",
+        ]
 
 
 class CourseSerializer(serializers.ModelSerializer):

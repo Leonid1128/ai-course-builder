@@ -1,213 +1,846 @@
 <!DOCTYPE html>
 <html lang="ru">
 <head>
-  <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>Конструктор курсов</title>
-  <style>
-    :root { font-family: Georgia, "Times New Roman", serif; color: #1b1b1b; background: #f4f1ea; }
-    body { margin: 0; }
-    header { background: #1f3d2b; color: #f4f1ea; padding: 1rem 1.5rem; }
-    main { display: grid; grid-template-columns: 320px 1fr; min-height: calc(100vh - 64px); }
-    aside, section { padding: 1rem 1.25rem; }
-    aside { background: #ebe6da; border-right: 1px solid #d5cfc0; }
-    .card { background: #fff; border: 1px solid #d5cfc0; border-radius: 8px; padding: 0.9rem; margin-bottom: 0.75rem; }
-    label { display: block; font-size: 0.85rem; margin: 0.4rem 0 0.15rem; }
-    input, textarea, select, button { font: inherit; }
-    input, textarea { width: 100%; box-sizing: border-box; padding: 0.4rem; }
-    button { background: #1f3d2b; color: #fff; border: 0; padding: 0.45rem 0.8rem; border-radius: 4px; cursor: pointer; margin: 0.2rem 0.2rem 0 0; }
-    button.secondary { background: #6b5843; }
-    button.danger { background: #8b2e2e; }
-    .muted { color: #5c584f; font-size: 0.9rem; }
-    .blocks { display: grid; gap: 0.75rem; }
-    pre { white-space: pre-wrap; background: #f7f4ee; padding: 0.5rem; overflow: auto; }
-  </style>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Конструктор курсов</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Source+Serif+4:opsz,wght@8..60,400;8..60,600;8..60,700&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --paper:#e9e2cf;
+    --surface:#fbf8f1;
+    --surface-raised:#ffffff;
+    --ink:#242720;
+    --ink-soft:#65614e;
+    --ink-faint:#948f76;
+    --pine:#25402c;
+    --pine-deep:#16261a;
+    --pine-tint:#e2e8dd;
+    --clay:#9c5b32;
+    --clay-tint:#f3e4d5;
+    --gold:#83671f;
+    --gold-tint:#eee6cd;
+    --brick:#7c332a;
+    --brick-tint:#f3ddd8;
+    --line:#d6c9a3;
+    --line-soft:#e7ddc0;
+    --radius-s:3px;
+    --radius-m:5px;
+    --font-serif:"Source Serif 4",Georgia,serif;
+    --font-sans:"IBM Plex Sans",-apple-system,Segoe UI,sans-serif;
+    --font-mono:"IBM Plex Mono",ui-monospace,SFMono-Regular,monospace;
+  }
+  *{box-sizing:border-box;}
+  html,body{margin:0;}
+  body{
+    background:var(--paper);
+    color:var(--ink);
+    font-family:var(--font-sans);
+    font-size:14.5px;
+    line-height:1.5;
+  }
+  :focus-visible{outline:2px solid var(--pine);outline-offset:2px;}
+  button{font-family:inherit;}
+  h1,h2,h3{font-family:var(--font-serif);font-weight:600;margin:0;}
+  a{color:inherit;}
+
+  /* ---------- layout ---------- */
+  #topbar{
+    background:var(--pine);
+    color:var(--pine-tint);
+    padding:0.7rem 1.25rem;
+    display:flex;
+    align-items:baseline;
+    justify-content:space-between;
+    gap:1rem;
+    border-bottom:1px solid var(--pine-deep);
+  }
+  #topbar .brand{font-family:var(--font-serif);font-size:1.15rem;color:#fff;}
+  #topbar .llm{font-family:var(--font-mono);font-size:0.78rem;color:var(--pine-tint);opacity:0.85;}
+  #app{
+    display:grid;
+    grid-template-columns:280px 1fr;
+    min-height:calc(100vh - 48px);
+  }
+  #rail{
+    background:var(--surface);
+    border-right:1px solid var(--line);
+    padding:1rem;
+    overflow-y:auto;
+  }
+  #workspace{
+    padding:1.75rem 2.25rem 4rem;
+    max-width:920px;
+  }
+  @media (max-width:760px){
+    #app{grid-template-columns:1fr;}
+    #rail{border-right:none;border-bottom:1px solid var(--line);}
+    #workspace{padding:1.25rem;}
+  }
+
+  /* ---------- rail ---------- */
+  .rail-label{font-size:0.72rem;color:var(--ink-soft);text-transform:uppercase;letter-spacing:0.04em;margin:0 0 0.4rem;}
+  #instructor-field{
+    display:flex;flex-direction:column;gap:0.25rem;margin-bottom:1.1rem;
+    padding-bottom:1rem;border-bottom:1px solid var(--line-soft);
+  }
+  #instructor-field input{font-family:var(--font-mono);font-size:0.85rem;}
+  .new-course-form{display:flex;flex-direction:column;gap:0.5rem;margin-bottom:1.2rem;}
+  .new-course-form input{width:100%;}
+  #course-list{display:flex;flex-direction:column;gap:0.35rem;}
+  .course-row{
+    display:flex;align-items:center;gap:0.5rem;
+    padding:0.5rem 0.6rem;border-radius:var(--radius-s);
+    cursor:pointer;border:1px solid transparent;background:transparent;
+    text-align:left;width:100%;color:inherit;
+  }
+  .course-row:hover{background:var(--pine-tint);}
+  .course-row.active{background:var(--surface-raised);border-color:var(--line);}
+  .course-row .title{font-weight:500;flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+  .dot{width:8px;height:8px;border-radius:50%;flex:none;}
+  .dot.draft{background:var(--ink-faint);}
+  .dot.generating{background:var(--clay);animation:pulse 1.4s ease-in-out infinite;}
+  .dot.ready{background:var(--gold);}
+  .dot.error{background:var(--brick);}
+  @keyframes pulse{0%,100%{opacity:1;}50%{opacity:0.35;}}
+  #rail-empty{color:var(--ink-faint);font-size:0.85rem;padding:0.4rem 0.6rem;}
+
+  /* ---------- controls ---------- */
+  label{display:block;font-size:0.8rem;color:var(--ink-soft);margin:0 0 0.2rem;}
+  input,textarea,select{
+    font:inherit;width:100%;padding:0.4rem 0.55rem;
+    border:1px solid var(--line);border-radius:var(--radius-s);
+    background:var(--surface-raised);color:var(--ink);
+  }
+  textarea{resize:vertical;min-height:2.4rem;}
+  button{
+    display:inline-flex;align-items:center;gap:0.35rem;
+    border:1px solid transparent;border-radius:var(--radius-s);
+    padding:0.4rem 0.75rem;cursor:pointer;font-size:0.85rem;font-weight:500;
+    background:var(--pine);color:#fff;
+  }
+  button:hover{background:var(--pine-deep);}
+  button:disabled{opacity:0.5;cursor:default;}
+  button.secondary{background:var(--surface-raised);color:var(--ink);border-color:var(--line);}
+  button.secondary:hover{background:var(--pine-tint);}
+  button.danger{background:var(--surface-raised);color:var(--brick);border-color:var(--brick-tint);}
+  button.danger:hover{background:var(--brick-tint);}
+  button.ghost{background:transparent;color:var(--ink-soft);border:none;padding:0.25rem 0.4rem;}
+  button.ghost:hover{background:var(--line-soft);}
+  button.icon{padding:0.25rem 0.5rem;font-size:0.9rem;line-height:1;}
+  .btn-row{display:flex;flex-wrap:wrap;gap:0.4rem;margin:0.6rem 0;}
+
+  /* ---------- workspace ---------- */
+  #empty-state{color:var(--ink-soft);padding-top:3rem;max-width:32ch;}
+  #empty-state h2{margin-bottom:0.5rem;}
+  .course-header{margin-bottom:1.4rem;}
+  .course-header-top{display:flex;align-items:flex-start;justify-content:space-between;gap:1rem;}
+  .course-header h1{font-size:1.7rem;}
+  .stat-row{display:flex;gap:1.5rem;margin-top:0.5rem;flex-wrap:wrap;}
+  .stat{font-size:0.85rem;color:var(--ink-soft);}
+  .stat strong{color:var(--ink);font-weight:500;}
+  .pill{
+    display:inline-flex;align-items:center;gap:0.35rem;
+    padding:0.2rem 0.6rem;border-radius:99px;font-size:0.78rem;font-weight:500;
+    white-space:nowrap;
+  }
+  .pill.draft{background:var(--line-soft);color:var(--ink-soft);}
+  .pill.generating{background:var(--clay-tint);color:var(--clay);}
+  .pill.ready{background:var(--gold-tint);color:var(--gold);}
+  .pill.error{background:var(--brick-tint);color:var(--brick);}
+  .error-banner{
+    margin-top:0.75rem;padding:0.6rem 0.8rem;border-radius:var(--radius-s);
+    background:var(--brick-tint);color:var(--brick);font-size:0.85rem;
+    border:1px solid #e3c3bc;
+  }
+
+  section.block{margin-top:2rem;}
+  .section-title{display:flex;align-items:baseline;justify-content:space-between;gap:1rem;margin-bottom:0.5rem;}
+  .section-title h2{font-size:1.05rem;}
+
+  /* materials */
+  #materials-list{display:flex;flex-wrap:wrap;gap:0.6rem;margin-top:0.6rem;}
+  .material-chip{
+    background:var(--surface-raised);border:1px solid var(--line);border-radius:var(--radius-m);
+    padding:0.5rem 0.65rem;font-size:0.82rem;min-width:180px;
+    display:flex;flex-direction:column;gap:0.15rem;position:relative;
+  }
+  .material-chip .name{font-weight:500;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;padding-right:1.2rem;}
+  .material-chip .status{font-size:0.76rem;color:var(--ink-soft);}
+  .material-chip .status.ok{color:var(--gold);}
+  .material-chip .status.err{color:var(--brick);}
+  .material-chip button.ghost{position:absolute;top:0.2rem;right:0.2rem;padding:0 0.35rem;}
+  .upload-control{display:flex;align-items:center;gap:0.5rem;margin-top:0.7rem;flex-wrap:wrap;}
+  .upload-control input[type=file]{width:auto;border:none;padding:0;background:none;flex:1;min-width:200px;}
+
+  /* sections */
+  .course-section{
+    border:1px solid var(--line);border-radius:var(--radius-m);
+    background:var(--surface);margin-bottom:0.9rem;overflow:hidden;
+  }
+  .course-section-head{
+    display:flex;align-items:center;gap:0.75rem;padding:0.7rem 0.9rem;
+    cursor:pointer;background:var(--surface-raised);
+  }
+  .section-index{
+    font-family:var(--font-mono);font-size:0.85rem;color:var(--ink-soft);
+    width:1.6rem;flex:none;
+  }
+  .course-section-head .section-name{font-weight:500;flex:1;min-width:0;}
+  .course-section-head .section-hours{font-family:var(--font-mono);font-size:0.78rem;color:var(--ink-soft);flex:none;}
+  .chevron{transition:transform 0.15s ease;color:var(--ink-faint);flex:none;}
+  .course-section.open .chevron{transform:rotate(90deg);}
+  .course-section-body{display:none;padding:0.8rem 0.9rem 1rem;}
+  .course-section.open .course-section-body{display:block;}
+  .objectives{font-size:0.85rem;color:var(--ink-soft);margin:0 0 0.8rem;padding-left:1.1rem;}
+  .objectives li{margin-bottom:0.15rem;}
+  .blocks-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(230px,1fr));gap:0.7rem;}
+
+  /* block card */
+  .block-card{
+    border:1px solid var(--line);border-radius:var(--radius-m);
+    background:var(--surface-raised);padding:0.65rem 0.7rem;display:flex;flex-direction:column;gap:0.4rem;
+  }
+  .block-card-head{display:flex;align-items:center;gap:0.4rem;}
+  .block-type{font-weight:600;font-size:0.85rem;text-transform:capitalize;}
+  .block-version{font-family:var(--font-mono);font-size:0.72rem;color:var(--ink-faint);}
+  .block-move{margin-left:auto;display:flex;gap:0.15rem;}
+  .block-empty{color:var(--ink-faint);font-size:0.82rem;}
+  .field-label{font-size:0.72rem;color:var(--ink-soft);margin:0.15rem 0 0.1rem;}
+  .block-actions{display:flex;flex-wrap:wrap;gap:0.35rem;margin-top:0.3rem;}
+  .instruction-row{display:flex;gap:0.35rem;margin-top:0.3rem;}
+  .instruction-row input{flex:1;}
+
+  /* toasts */
+  #toasts{position:fixed;bottom:1rem;right:1rem;display:flex;flex-direction:column;gap:0.5rem;z-index:50;}
+  .toast{
+    background:var(--pine-deep);color:#fff;padding:0.55rem 0.85rem;border-radius:var(--radius-s);
+    font-size:0.85rem;max-width:320px;box-shadow:0 2px 10px rgba(0,0,0,0.18);
+    animation:toast-in 0.15s ease-out;
+  }
+  .toast.err{background:var(--brick);}
+  @keyframes toast-in{from{transform:translateY(6px);opacity:0;}to{transform:translateY(0);opacity:1;}}
+
+  /* history modal */
+  dialog{
+    border:1px solid var(--line);border-radius:var(--radius-m);padding:0;
+    width:min(560px,92vw);background:var(--surface);color:var(--ink);
+  }
+  dialog::backdrop{background:rgba(22,20,12,0.35);}
+  .dialog-head{display:flex;justify-content:space-between;align-items:center;padding:0.8rem 1rem;border-bottom:1px solid var(--line-soft);}
+  .dialog-body{padding:0.8rem 1rem;max-height:60vh;overflow-y:auto;}
+  .revision-row{border:1px solid var(--line-soft);border-radius:var(--radius-s);padding:0.5rem 0.6rem;margin-bottom:0.5rem;}
+  .revision-row .meta{display:flex;justify-content:space-between;font-size:0.78rem;color:var(--ink-soft);margin-bottom:0.3rem;}
+  .revision-row pre{margin:0;white-space:pre-wrap;font-family:var(--font-mono);font-size:0.76rem;background:var(--surface-raised);padding:0.4rem;border-radius:var(--radius-s);max-height:8rem;overflow:auto;}
+</style>
 </head>
 <body>
-  <header>
-    <strong>Конструктор курсов</strong>
-    <span class="muted" id="llm-info"></span>
-  </header>
-  <main>
-    <aside>
-      <h2>Новый курс</h2>
-      <label>Дисциплина</label>
-      <input id="discipline_name" value="Информатика">
-      <label>ФИО преподавателя</label>
-      <input id="instructor_fio" value="Иванов И.И.">
-      <label>ID преподавателя</label>
-      <input id="instructor_id" value="instructor-1">
-      <label>Направление</label>
-      <input id="education_direction" value="09.03.01">
-      <label>Часы</label>
-      <input id="course_hours" type="number" value="36" min="1">
-      <button id="create-course">Создать</button>
-      <h2>Курсы</h2>
+  <div id="topbar">
+    <span class="brand">Конструктор курсов</span>
+    <span class="llm" id="llm-info">LLM: …</span>
+  </div>
+
+  <div id="app">
+    <aside id="rail">
+      <div id="instructor-field">
+        <label for="instructor_id">Вы (ID преподавателя)</label>
+        <input id="instructor_id" value="instructor-1">
+      </div>
+
+      <p class="rail-label">Новый курс</p>
+      <div class="new-course-form">
+        <div>
+          <label for="f-discipline">Дисциплина</label>
+          <input id="f-discipline" value="Информатика">
+        </div>
+        <div>
+          <label for="f-fio">ФИО преподавателя</label>
+          <input id="f-fio" value="Иванов И.И.">
+        </div>
+        <div>
+          <label for="f-direction">Направление (ФГОС)</label>
+          <input id="f-direction" value="09.03.01">
+        </div>
+        <div>
+          <label for="f-hours">Объём, часов</label>
+          <input id="f-hours" type="number" min="1" value="36">
+        </div>
+        <button id="create-course">Создать курс</button>
+      </div>
+
+      <p class="rail-label">Курсы</p>
       <div id="course-list"></div>
     </aside>
-    <section>
-      <div id="course-panel" class="muted">Выберите курс слева.</div>
-    </section>
-  </main>
-  <script>
-    const instructorInput = () => document.getElementById("instructor_id").value;
-    const headers = () => ({
-      "Content-Type": "application/json",
-      "X-Instructor-Id": instructorInput(),
+
+    <main id="workspace">
+      <div id="empty-state">
+        <h2>Выберите курс</h2>
+        <p>Слева — список курсов. Создайте новый или откройте существующий, чтобы загрузить материалы и сгенерировать структуру.</p>
+      </div>
+      <div id="course-view" style="display:none;"></div>
+    </main>
+  </div>
+
+  <div id="toasts"></div>
+
+  <dialog id="history-dialog">
+    <div class="dialog-head">
+      <strong>История версий</strong>
+      <button class="ghost icon" id="history-close" aria-label="Закрыть">✕</button>
+    </div>
+    <div class="dialog-body" id="history-body"></div>
+  </dialog>
+
+<script>
+"use strict";
+
+/* ---------------------------------------------------------------- */
+/* state + tiny utilities                                            */
+/* ---------------------------------------------------------------- */
+const state = {
+  instructorId: localStorage.getItem("cc_instructor_id") || "instructor-1",
+  courses: [],
+  currentCourseId: localStorage.getItem("cc_last_course") || null,
+};
+
+function esc(value) {
+  return String(value ?? "").replace(/[&<>"']/g, (c) => ({
+    "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;",
+  }[c]));
+}
+
+function toast(message, isError) {
+  const root = document.getElementById("toasts");
+  const el = document.createElement("div");
+  el.className = "toast" + (isError ? " err" : "");
+  el.textContent = message;
+  root.appendChild(el);
+  setTimeout(() => el.remove(), 4200);
+}
+
+function headers(json) {
+  const h = { "X-Instructor-Id": state.instructorId };
+  if (json) h["Content-Type"] = "application/json";
+  return h;
+}
+
+async function api(path, options = {}) {
+  const response = await fetch(path, options);
+  let data = {};
+  try { data = await response.json(); } catch (e) { /* no body */ }
+  if (!response.ok) {
+    const message = data.error || data.detail || JSON.stringify(data) || response.statusText;
+    throw new Error(message);
+  }
+  return data;
+}
+
+/** Poll /api/tasks/<id>/ until Celery reports the task as finished. */
+function pollTask(taskId, { onDone, onError, intervalMs = 1200, timeoutMs = 90000 } = {}) {
+  const startedAt = Date.now();
+  const tick = async () => {
+    let info;
+    try {
+      info = await api(`/api/tasks/${taskId}/`);
+    } catch (e) {
+      onError && onError(e.message);
+      return;
+    }
+    if (info.ready) {
+      if (info.error) { onError && onError(info.error); }
+      else { onDone && onDone(info.result); }
+      return;
+    }
+    if (Date.now() - startedAt > timeoutMs) {
+      onError && onError("Превышено время ожидания задачи.");
+      return;
+    }
+    setTimeout(tick, intervalMs);
+  };
+  tick();
+}
+
+/* ---------------------------------------------------------------- */
+/* LLM banner                                                        */
+/* ---------------------------------------------------------------- */
+async function loadLlmStatus() {
+  try {
+    const info = await api("/api/llm/");
+    const where = info.is_local ? "локально" : "облако";
+    document.getElementById("llm-info").textContent =
+      `LLM: ${info.provider} · ${info.model} (${where})`;
+  } catch (e) {
+    document.getElementById("llm-info").textContent = "LLM: недоступен";
+  }
+}
+
+/* ---------------------------------------------------------------- */
+/* course list (rail)                                                */
+/* ---------------------------------------------------------------- */
+const STATUS_LABEL = { draft: "черновик", generating: "генерация…", ready: "готов", error: "ошибка" };
+
+async function loadCourses() {
+  const data = await api("/api/courses/");
+  state.courses = data.results || data;
+  renderCourseList();
+}
+
+function renderCourseList() {
+  const root = document.getElementById("course-list");
+  root.innerHTML = "";
+  if (state.courses.length === 0) {
+    root.innerHTML = '<div id="rail-empty">Пока нет курсов.</div>';
+    return;
+  }
+  state.courses.forEach((course) => {
+    const row = document.createElement("button");
+    row.className = "course-row" + (course.id === state.currentCourseId ? " active" : "");
+    row.innerHTML = `
+      <span class="dot ${esc(course.status)}"></span>
+      <span class="title">${esc(course.discipline_name)}</span>
+    `;
+    row.onclick = () => openCourse(course.id);
+    root.appendChild(row);
+  });
+}
+
+async function createCourse() {
+  const btn = document.getElementById("create-course");
+  btn.disabled = true;
+  try {
+    const course = await api("/api/courses/", {
+      method: "POST",
+      headers: headers(true),
+      body: JSON.stringify({
+        instructor_id: state.instructorId,
+        instructor_fio: document.getElementById("f-fio").value,
+        discipline_name: document.getElementById("f-discipline").value,
+        education_direction: document.getElementById("f-direction").value,
+        course_hours: Number(document.getElementById("f-hours").value),
+      }),
     });
+    await loadCourses();
+    openCourse(course.id);
+    toast("Курс создан.");
+  } catch (e) {
+    toast(e.message, true);
+  } finally {
+    btn.disabled = false;
+  }
+}
 
-    async function api(path, options = {}) {
-      const response = await fetch(path, options);
-      const data = await response.json().catch(() => ({}));
-      if (!response.ok) throw new Error(data.error || data.detail || response.statusText);
-      return data;
+/* ---------------------------------------------------------------- */
+/* course workspace                                                   */
+/* ---------------------------------------------------------------- */
+async function openCourse(id) {
+  state.currentCourseId = id;
+  localStorage.setItem("cc_last_course", id);
+  renderCourseList();
+  document.getElementById("empty-state").style.display = "none";
+  const view = document.getElementById("course-view");
+  view.style.display = "block";
+  try {
+    const course = await api(`/api/courses/${id}/`);
+    renderCourse(course);
+  } catch (e) {
+    toast(e.message, true);
+  }
+}
+
+function renderCourse(course) {
+  const view = document.getElementById("course-view");
+  const statusLabel = STATUS_LABEL[course.status] || course.status;
+  view.innerHTML = `
+    <div class="course-header">
+      <div class="course-header-top">
+        <h1>${esc(course.discipline_name)}</h1>
+        <span class="pill ${esc(course.status)}">${esc(statusLabel)}</span>
+      </div>
+      <div class="stat-row">
+        <span class="stat">Направление <strong>${esc(course.education_direction)}</strong></span>
+        <span class="stat">Объём <strong>${esc(course.course_hours)} ч.</strong></span>
+        <span class="stat">Преподаватель <strong>${esc(course.instructor_fio)}</strong></span>
+      </div>
+      ${course.last_error ? `<div class="error-banner">${esc(course.last_error)}</div>` : ""}
+      <div class="btn-row">
+        <button class="danger" data-act="delete-course">Удалить курс</button>
+      </div>
+    </div>
+
+    <section class="block" id="materials-block">
+      <div class="section-title"><h2>Материалы</h2></div>
+      <div id="materials-list"></div>
+      <div class="upload-control">
+        <input id="pdf-input" type="file" accept="application/pdf">
+        <button class="secondary" data-act="upload">Загрузить PDF (до 100 стр.)</button>
+      </div>
+    </section>
+
+    <section class="block" id="structure-block">
+      <div class="section-title">
+        <h2>Структура курса</h2>
+        <div class="btn-row" style="margin:0;">
+          <button data-act="gen-structure">Сгенерировать структуру</button>
+          <button class="secondary" data-act="gen-blocks" ${course.status !== "ready" ? "disabled" : ""}>Сгенерировать блоки</button>
+        </div>
+      </div>
+      <div id="sections-list"></div>
+    </section>
+  `;
+
+  view.querySelector('[data-act="delete-course"]').onclick = () => deleteCourse(course.id);
+  view.querySelector('[data-act="upload"]').onclick = () => uploadMaterial(course.id);
+  view.querySelector('[data-act="gen-structure"]').onclick = () => generateStructure(course.id);
+  view.querySelector('[data-act="gen-blocks"]').onclick = () => generateAllBlocks(course.id, course.sections || []);
+
+  renderMaterials(course.materials || []);
+  renderSections(course.sections || [], course.id);
+}
+
+/* ---------------------------------------------------------------- */
+/* materials                                                          */
+/* ---------------------------------------------------------------- */
+function renderMaterials(materials) {
+  const root = document.getElementById("materials-list");
+  if (!materials.length) {
+    root.innerHTML = '<p class="block-empty">Материалы ещё не загружены — блоки будут генерироваться без опоры на конспект.</p>';
+    return;
+  }
+  root.innerHTML = "";
+  materials.forEach((m) => {
+    const chip = document.createElement("div");
+    chip.className = "material-chip";
+    let statusText, statusClass;
+    if (m.processing_error) { statusText = m.processing_error; statusClass = "err"; }
+    else if (m.embedding_status) { statusText = `готово · ${m.page_count} стр.`; statusClass = "ok"; }
+    else { statusText = "обрабатывается…"; statusClass = ""; }
+    chip.innerHTML = `
+      <span class="name" title="${esc(m.filename)}">${esc(m.filename)}</span>
+      <span class="status ${statusClass}">${esc(statusText)}</span>
+      <button class="ghost icon" aria-label="Удалить материал">✕</button>
+    `;
+    chip.querySelector("button").onclick = () => deleteMaterial(m.id);
+    root.appendChild(chip);
+
+    if (!m.embedding_status && !m.processing_error) {
+      const check = async () => {
+        try {
+          const fresh = await api(`/api/materials/${m.id}/`);
+          if (fresh.embedding_status || fresh.processing_error) {
+            openCourse(state.currentCourseId);
+          } else {
+            setTimeout(check, 2000);
+          }
+        } catch (e) { /* material may have been deleted meanwhile */ }
+      };
+      setTimeout(check, 2000);
     }
+  });
+}
 
-    async function loadLlm() {
-      const info = await api("/api/llm/");
-      document.getElementById("llm-info").textContent =
-        ` · LLM: ${info.provider} / ${info.model}`;
-    }
+async function uploadMaterial(courseId) {
+  const input = document.getElementById("pdf-input");
+  const file = input.files[0];
+  if (!file) { toast("Выберите PDF-файл.", true); return; }
+  const body = new FormData();
+  body.append("course", courseId);
+  body.append("filepath", file);
+  try {
+    await api("/api/materials/", { method: "POST", headers: headers(false), body });
+    toast("Файл загружен, идёт обработка.");
+    input.value = "";
+    await openCourse(courseId);
+  } catch (e) {
+    toast(e.message, true);
+  }
+}
 
-    async function loadCourses() {
-      const data = await api("/api/courses/");
-      const items = data.results || data;
-      const root = document.getElementById("course-list");
-      root.innerHTML = "";
-      items.forEach((course) => {
-        const el = document.createElement("div");
-        el.className = "card";
-        el.innerHTML = `<strong>${course.discipline_name}</strong><div class="muted">${course.status}</div>`;
-        el.onclick = () => openCourse(course.id);
-        root.appendChild(el);
+async function deleteMaterial(materialId) {
+  if (!confirm("Удалить материал?")) return;
+  try {
+    await fetch(`/api/materials/${materialId}/`, { method: "DELETE", headers: headers(false) });
+    await openCourse(state.currentCourseId);
+  } catch (e) {
+    toast(e.message, true);
+  }
+}
+
+/* ---------------------------------------------------------------- */
+/* structure + sections                                               */
+/* ---------------------------------------------------------------- */
+async function generateStructure(courseId) {
+  try {
+    const { task_id } = await api(`/api/courses/${courseId}/generate-structure/`, {
+      method: "POST", headers: headers(false),
+    });
+    toast("Генерация структуры запущена…");
+    if (state.currentCourseId === courseId) await openCourse(courseId);
+    pollTask(task_id, {
+      onDone: () => { toast("Структура готова."); if (state.currentCourseId === courseId) openCourse(courseId); loadCourses(); },
+      onError: (msg) => { toast(`Ошибка генерации структуры: ${msg}`, true); if (state.currentCourseId === courseId) openCourse(courseId); },
+    });
+  } catch (e) {
+    toast(e.message, true);
+  }
+}
+
+async function generateAllBlocks(courseId, sections) {
+  try {
+    const { task_ids } = await api(`/api/courses/${courseId}/generate-all-blocks/`, {
+      method: "POST", headers: headers(false),
+    });
+    toast(`Генерация блоков запущена для ${task_ids.length} раздел(ов)…`);
+    let remaining = task_ids.length;
+    task_ids.forEach((taskId) => {
+      pollTask(taskId, {
+        onDone: () => { remaining -= 1; if (remaining === 0) { toast("Блоки сгенерированы."); if (state.currentCourseId === courseId) openCourse(courseId); } },
+        onError: (msg) => { toast(`Ошибка генерации блоков: ${msg}`, true); if (state.currentCourseId === courseId) openCourse(courseId); },
+      });
+    });
+  } catch (e) {
+    toast(e.message, true);
+  }
+}
+
+async function deleteCourse(courseId) {
+  if (!confirm("Удалить курс со всей структурой и материалами?")) return;
+  try {
+    await fetch(`/api/courses/${courseId}/`, { method: "DELETE", headers: headers(false) });
+    state.currentCourseId = null;
+    localStorage.removeItem("cc_last_course");
+    document.getElementById("course-view").style.display = "none";
+    document.getElementById("empty-state").style.display = "block";
+    await loadCourses();
+    toast("Курс удалён.");
+  } catch (e) {
+    toast(e.message, true);
+  }
+}
+
+function renderSections(sections, courseId) {
+  const root = document.getElementById("sections-list");
+  if (!sections.length) {
+    root.innerHTML = '<p class="block-empty">Структура ещё не сгенерирована.</p>';
+    return;
+  }
+  root.innerHTML = "";
+  sections.forEach((section, index) => {
+    const wrap = document.createElement("div");
+    wrap.className = "course-section";
+    wrap.innerHTML = `
+      <div class="course-section-head">
+        <span class="section-index">${index + 1}</span>
+        <span class="section-name">${esc(section.title)}</span>
+        <span class="section-hours">${esc(section.hours)} ч.</span>
+        <span class="chevron">▸</span>
+      </div>
+      <div class="course-section-body">
+        ${(section.objectives || []).length ? `<ul class="objectives">${section.objectives.map((o) => `<li>${esc(o)}</li>`).join("")}</ul>` : ""}
+        ${section.description ? `<p class="block-empty">${esc(section.description)}</p>` : ""}
+        <div class="blocks-grid"></div>
+      </div>
+    `;
+    wrap.querySelector(".course-section-head").onclick = () => wrap.classList.toggle("open");
+    const grid = wrap.querySelector(".blocks-grid");
+    const blocks = section.blocks || [];
+    if (!blocks.length) {
+      grid.innerHTML = '<p class="block-empty">Блоки ещё не сгенерированы.</p>';
+    } else {
+      blocks.forEach((block, blockIndex) => {
+        grid.appendChild(renderBlock(block, courseId, blocks, blockIndex));
       });
     }
+    root.appendChild(wrap);
+  });
+}
 
-    async function createCourse() {
-      await api("/api/courses/", {
-        method: "POST",
-        headers: headers(),
-        body: JSON.stringify({
-          instructor_id: instructorInput(),
-          instructor_fio: document.getElementById("instructor_fio").value,
-          discipline_name: document.getElementById("discipline_name").value,
-          education_direction: document.getElementById("education_direction").value,
-          course_hours: Number(document.getElementById("course_hours").value),
-        }),
-      });
-      await loadCourses();
-    }
+/* ---------------------------------------------------------------- */
+/* block card                                                         */
+/* ---------------------------------------------------------------- */
+function renderBlock(block, courseId, siblings, index) {
+  const el = document.createElement("div");
+  el.className = "block-card";
+  const contentKeys = Object.keys(block.content || {});
 
-    async function openCourse(id) {
-      const course = await api(`/api/courses/${id}/`);
-      const panel = document.getElementById("course-panel");
-      panel.innerHTML = `
-        <h2>${course.discipline_name}</h2>
-        <p class="muted">${course.education_direction} · ${course.course_hours} ч. · ${course.status}</p>
-        <label>PDF-материалы (до 100 стр.)</label>
-        <input id="pdf" type="file" accept="application/pdf">
-        <button data-act="upload" class="secondary">Загрузить PDF</button>
-        <p>
-          <button data-act="structure">Сгенерировать структуру</button>
-          <button data-act="blocks" class="secondary">Сгенерировать блоки</button>
-        </p>
-        <div id="sections"></div>
-      `;
-      panel.querySelector('[data-act="structure"]').onclick = async () => {
-        await api(`/api/courses/${id}/generate-structure/`, { method: "POST", headers: headers() });
-        await openCourse(id);
-      };
-      panel.querySelector('[data-act="blocks"]').onclick = async () => {
-        await api(`/api/courses/${id}/generate-all-blocks/`, { method: "POST", headers: headers() });
-        await openCourse(id);
-      };
-      panel.querySelector('[data-act="upload"]').onclick = async () => {
-        const file = document.getElementById("pdf").files[0];
-        if (!file) return;
-        const body = new FormData();
-        body.append("course", id);
-        body.append("filepath", file);
-        await fetch("/api/materials/", { method: "POST", body, headers: { "X-Instructor-Id": instructorInput() } });
-        await openCourse(id);
-      };
-      const sectionsRoot = panel.querySelector("#sections");
-      (course.sections || []).forEach((section) => {
-        const wrap = document.createElement("div");
-        wrap.innerHTML = `<h3>${section.title} <span class="muted">${section.hours} ч.</span></h3>`;
-        const blocks = document.createElement("div");
-        blocks.className = "blocks";
-        (section.blocks || []).forEach((block) => blocks.appendChild(renderBlock(block, id)));
-        wrap.appendChild(blocks);
-        sectionsRoot.appendChild(wrap);
-      });
-    }
+  let fieldsHtml = "";
+  if (!contentKeys.length) {
+    fieldsHtml = '<p class="block-empty">(пусто)</p>';
+  } else {
+    contentKeys.forEach((key) => {
+      const value = block.content[key];
+      const isObject = typeof value === "object" && value !== null;
+      const jsonStr = isObject ? JSON.stringify(value, null, 2) : String(value ?? "");
+      const isLong = isObject || (typeof value === "string" && value.length > 100);
+      fieldsHtml += `<div class="field-label">${esc(key)}</div>`;
+      fieldsHtml += isLong
+        ? `<textarea class="field" data-key="${esc(key)}" rows="4">${esc(jsonStr)}</textarea>`
+        : `<input class="field" data-key="${esc(key)}" type="text" value="${esc(jsonStr)}">`;
+    });
+  }
 
-    function renderBlock(block, courseId) {
-      const el = document.createElement("div");
-      el.className = "card";
+  el.innerHTML = `
+    <div class="block-card-head">
+      <span class="block-type">${esc(block.type)}</span>
+      <span class="block-version">v${esc(block.version)}</span>
+      <span class="block-move">
+        <button class="ghost icon" data-act="up" ${index === 0 ? "disabled" : ""} aria-label="Переместить выше">↑</button>
+        <button class="ghost icon" data-act="down" ${index === siblings.length - 1 ? "disabled" : ""} aria-label="Переместить ниже">↓</button>
+      </span>
+    </div>
+    ${fieldsHtml}
+    <div class="instruction-row">
+      <input class="instruction" placeholder="Инструкция для перегенерации">
+    </div>
+    <div class="block-actions">
+      <button class="secondary" data-act="save">Сохранить</button>
+      <button class="secondary" data-act="regen">Перегенерировать</button>
+      <button class="ghost" data-act="history">История</button>
+      <button class="danger" data-act="delete">Удалить</button>
+    </div>
+  `;
 
-      let html = `<strong>${block.type}</strong> · v${block.version}`;
-      const contentKeys = Object.keys(block.content);
-
-      if (contentKeys.length === 0) {
-        html += `<div class="muted">(пусто)</div>`;
+  el.querySelector('[data-act="save"]').onclick = async () => {
+    const newContent = {};
+    contentKeys.forEach((key) => {
+      const field = el.querySelector(`.field[data-key="${CSS.escape(key)}"]`);
+      const raw = field.value;
+      const original = block.content[key];
+      if (typeof original === "object" && original !== null) {
+        try { newContent[key] = JSON.parse(raw); }
+        catch (e) { toast(`Поле "${key}": некорректный JSON, сохранено как текст.`, true); newContent[key] = raw; }
       } else {
-        contentKeys.forEach(key => {
-          const value = block.content[key];
-          html += `<label>${key}</label>`;
-
-          if (typeof value === "object" && value !== null) {
-            const jsonStr = JSON.stringify(value, null, 2);
-            html += `<textarea class="field-${key}" rows="6">${jsonStr}</textarea>`;
-          } else {
-            const isLong = typeof value === "string" && value.length > 100;
-            if (isLong) {
-              html += `<textarea class="field-${key}" rows="4">${value}</textarea>`;
-            } else {
-              html += `<input class="field-${key}" type="text" value="${value ?? ''}" placeholder="${key}">`;
-            }
-          }
-        });
+        newContent[key] = raw;
       }
-
-      html += `
-        <label>Инструкция для перегенерации</label>
-        <input class="instruction" placeholder="Сократи текст, сохрани термины из PDF">
-        <button data-act="save">Сохранить</button>
-        <button data-act="regen" class="secondary">Перегенерировать</button>
-        <button data-act="delete" class="danger">Удалить</button>
-      `;
-      el.innerHTML = html;
-
-      el.querySelector('[data-act="save"]').onclick = async () => {
-        const newContent = {};
-        contentKeys.forEach(key => {
-          const field = el.querySelector(`.field-${key}`);
-          const rawValue = field.value;
-          if (typeof block.content[key] === "object" && block.content[key] !== null) {
-            try {
-              newContent[key] = JSON.parse(rawValue);
-            } catch (e) {
-              newContent[key] = rawValue;
-            }
-          } else {
-            newContent[key] = rawValue;
-          }
-        });
-        await api(`/api/blocks/${block.id}/`, {
-          method: "PATCH",
-          headers: headers(),
-          body: JSON.stringify({ content: newContent }),
-        });
-        await openCourse(courseId);
-      };
-
-      return el;
+    });
+    try {
+      await api(`/api/blocks/${block.id}/`, {
+        method: "PATCH", headers: headers(true),
+        body: JSON.stringify({ content: newContent }),
+      });
+      toast("Блок сохранён.");
+      await openCourse(courseId);
+    } catch (e) {
+      toast(e.message, true);
     }
+  };
 
-    document.getElementById("create-course").onclick = () => createCourse().catch(alert);
-    loadLlm().catch(() => {});
-    loadCourses().catch((err) => alert(err.message));
-  </script>
+  el.querySelector('[data-act="regen"]').onclick = async () => {
+    const instruction = el.querySelector(".instruction").value || "Улучши качество контента";
+    const btn = el.querySelector('[data-act="regen"]');
+    btn.disabled = true;
+    btn.textContent = "Генерация…";
+    try {
+      const { task_id } = await api(`/api/blocks/${block.id}/regenerate/`, {
+        method: "POST", headers: headers(true), body: JSON.stringify({ instruction }),
+      });
+      pollTask(task_id, {
+        onDone: () => { toast("Блок перегенерирован."); openCourse(courseId); },
+        onError: (msg) => { toast(`Ошибка перегенерации: ${msg}`, true); btn.disabled = false; btn.textContent = "Перегенерировать"; },
+      });
+    } catch (e) {
+      toast(e.message, true);
+      btn.disabled = false;
+      btn.textContent = "Перегенерировать";
+    }
+  };
+
+  el.querySelector('[data-act="delete"]').onclick = async () => {
+    if (!confirm("Удалить блок?")) return;
+    try {
+      await fetch(`/api/blocks/${block.id}/`, { method: "DELETE", headers: headers(false) });
+      toast("Блок удалён.");
+      await openCourse(courseId);
+    } catch (e) {
+      toast(e.message, true);
+    }
+  };
+
+  el.querySelector('[data-act="history"]').onclick = () => openHistory(block.id, courseId);
+
+  const moveBtn = (dir) => async () => {
+    const otherIndex = dir === "up" ? index - 1 : index + 1;
+    const other = siblings[otherIndex];
+    if (!other) return;
+    try {
+      await api("/api/blocks/reorder/", {
+        method: "POST", headers: headers(true),
+        body: JSON.stringify([
+          { id: block.id, order: other.order },
+          { id: other.id, order: block.order },
+        ]),
+      });
+      await openCourse(courseId);
+    } catch (e) {
+      toast(e.message, true);
+    }
+  };
+  el.querySelector('[data-act="up"]').onclick = moveBtn("up");
+  el.querySelector('[data-act="down"]').onclick = moveBtn("down");
+
+  return el;
+}
+
+/* ---------------------------------------------------------------- */
+/* revision history modal                                             */
+/* ---------------------------------------------------------------- */
+const historyDialog = document.getElementById("history-dialog");
+document.getElementById("history-close").onclick = () => historyDialog.close();
+
+async function openHistory(blockId, courseId) {
+  const body = document.getElementById("history-body");
+  body.innerHTML = "Загрузка…";
+  historyDialog.showModal();
+  try {
+    const revisions = await api(`/api/blocks/${blockId}/history/`);
+    if (!revisions.length) {
+      body.innerHTML = '<p class="block-empty">Правок ещё не было.</p>';
+      return;
+    }
+    body.innerHTML = "";
+    revisions.forEach((rev) => {
+      const row = document.createElement("div");
+      row.className = "revision-row";
+      row.innerHTML = `
+        <div class="meta">
+          <span>Версия ${esc(rev.version)}</span>
+          <span>${esc(new Date(rev.created_at).toLocaleString("ru-RU"))}</span>
+        </div>
+        <pre>${esc(JSON.stringify(rev.content, null, 2))}</pre>
+        <button class="secondary" style="margin-top:0.4rem;">Восстановить эту версию</button>
+      `;
+      row.querySelector("button").onclick = async () => {
+        try {
+          await api(`/api/blocks/${blockId}/restore/${rev.id}/`, { method: "POST", headers: headers(false) });
+          toast("Версия восстановлена.");
+          historyDialog.close();
+          await openCourse(courseId);
+        } catch (e) {
+          toast(e.message, true);
+        }
+      };
+      body.appendChild(row);
+    });
+  } catch (e) {
+    body.innerHTML = `<p class="block-empty">${esc(e.message)}</p>`;
+  }
+}
+
+/* ---------------------------------------------------------------- */
+/* wire-up + boot                                                     */
+/* ---------------------------------------------------------------- */
+document.getElementById("instructor_id").addEventListener("change", (e) => {
+  state.instructorId = e.target.value || "instructor-1";
+  localStorage.setItem("cc_instructor_id", state.instructorId);
+});
+document.getElementById("instructor_id").value = state.instructorId;
+document.getElementById("create-course").onclick = createCourse;
+
+loadLlmStatus();
+loadCourses()
+  .then(() => { if (state.currentCourseId) openCourse(state.currentCourseId); })
+  .catch((e) => toast(e.message, true));
+</script>
 </body>
 </html>

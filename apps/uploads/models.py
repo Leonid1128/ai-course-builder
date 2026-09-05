@@ -14,6 +14,7 @@ class UserMaterial(models.Model):
     filepath: models.FileField = models.FileField(upload_to="uploads/%Y/%m/%d/")
     filetype: models.CharField = models.CharField(max_length=10, default="pdf")
     embedding_status: models.BooleanField = models.BooleanField(default=False)
+    processing_error: models.TextField = models.TextField(blank=True, default="")
     page_count: models.PositiveIntegerField = models.PositiveIntegerField(default=0)
     uploaded_at: models.DateTimeField = models.DateTimeField(auto_now_add=True)
 

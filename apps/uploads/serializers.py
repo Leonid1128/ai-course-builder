@@ -15,6 +15,7 @@ class UploadMaterialSerializer(serializers.ModelSerializer):
             "filename",
             "filetype",
             "embedding_status",
+            "processing_error",
             "page_count",
             "uploaded_at",
         ]
@@ -23,6 +24,7 @@ class UploadMaterialSerializer(serializers.ModelSerializer):
             "filename",
             "filetype",
             "embedding_status",
+            "processing_error",
             "page_count",
             "uploaded_at",
         ]

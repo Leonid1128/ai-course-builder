@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import logging
 from typing import Any
 from uuid import UUID
 
@@ -29,6 +30,9 @@ def _as_block_list(payload: Any) -> list[Any]:
         if "type" in payload:
             return [payload]
     raise InvalidJSONError("AI returned JSON that is not a block or a list of blocks")
+
+
+logger = logging.getLogger(__name__)
 
 
 class ContentBlockGenerator:
@@ -87,18 +91,20 @@ class ContentBlockGenerator:
         )
         raw = self.ai_client.generate(prompt, timeout=timeout)
         blocks = self._parse_blocks(raw)
+        if not blocks:
+            raise InvalidJSONError(
+                f"AI returned an empty block list while regenerating block {block_id}"
+            )
         block = blocks[0]
         block.version = version + 1
         return block
 
     def _parse_blocks(self, raw: str) -> list[BlockOutput]:
         payload = parse_llm_json(raw)
-        import logging
-        logger = logging.getLogger(__name__)
-        logger.info(f"LLM response payload: {payload}") 
+        logger.debug("LLM response payload: %.500s", payload)
         items = _as_block_list(payload)
         try:
             return [BlockOutput.model_validate(item) for item in items]
         except Exception as exc:
-            logger.error(f"Failed to validate item: {items}")
+            logger.error("Failed to validate %d block item(s) from AI response", len(items))
             raise InvalidJSONError("AI returned JSON that does not match the block schema") from exc
